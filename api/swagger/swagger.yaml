@@ -5,7 +5,7 @@ info:
 # during dev, should point to your local machine
 host: localhost:10010
 # basePath prefixes all resource paths 
-basePath: /
+basePath: /api/v1
 # 
 schemes:
   # tip: remove http to make production-grade
@@ -18,26 +18,30 @@ consumes:
 produces:
   - application/json
 paths:
-  /hello:
-    # binds a127 app logic to a route
-    x-swagger-router-controller: hello_world
+  /cards:
+    x-swagger-router-controller: card_controller
     get:
-      description: Returns 'Hello' to the caller
-      # used as the method name of the controller
-      operationId: hello
-      parameters:
-        - name: name
-          in: query
-          description: The name of the person to whom to say hello
-          required: false
-          type: string
+      description: Returns list of cards
+      operationId: getCards
       responses:
         "200":
           description: Success
           schema:
-            # a pointer to a definition
-            $ref: "#/definitions/HelloWorldResponse"
-        # responses may fall through to errors
+            $ref: "#/definitions/GetCardListResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /card:
+    x-swagger-router-controller: card_controller
+    get:
+      description: Returns list of cards
+      operationId: getCard
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/GetCardResponse"
         default:
           description: Error
           schema:
@@ -46,12 +50,102 @@ paths:
     x-swagger-pipe: swagger_raw
 # complex objects have schema definitions
 definitions:
-  HelloWorldResponse:
-    required:
-      - message
+  Address:
+    type: object
     properties:
-      message:
+      line1:
         type: string
+      line2:
+        type: string
+      city:
+        type: string
+      state:
+        type: string
+      postal_code:
+        type: string
+      country:
+        type: string
+    required:
+      - line1
+      - city
+      - postal_code
+      - country
+  CardHolder:
+    type: object
+    properties:
+      id:
+        type: string
+      billing_address:
+        $ref: "#/definitions/Address"
+      name:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      email:
+        type: string
+        format: email
+      phone_number:
+        type: string
+      status:
+        type: string
+      type:
+        type: string
+    required:
+      - name
+      - billing_address
+      - created_at
+      - email
+      - phone_number
+      - status
+      - type
+  Card:
+    type: object
+    properties:
+      id:
+        type: string
+      cardholder:
+        $ref: "#/definitions/CardHolder"
+      created_at:
+        type: string
+        format: date-time
+      exp_month:
+        type: integer
+        minimum: 1
+        maximum: 12
+      exp_year:
+        type: integer
+        minimum: 2020
+        maximum: 2030
+      currency:
+        type: string
+        enum: [usd]
+      status:
+        type: string
+        enum: [active, inactive]
+      last4:
+        type: string
+        pattern: '^\d{4}'
+      name:
+        type: string
+      shipping_address:
+        $ref: "#/definitions/Address"
+    required:
+      - cardholder
+  GetCardListResponse:
+    required:
+      - cards
+    properties:
+      cards:
+        type: array
+        items:
+          $ref: "#/definitions/Card"
+  GetCardResponse:
+    required:
+      - card
+    properties:
+      card:
+        $ref: "#/definitions/Card"
   ErrorResponse:
     required:
       - message
